@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+  id="Definitions_advisor_request_workflow"
+  targetNamespace="http://fluxnova-request-lab/bpmn">
+  <bpmn:process id="advisor_request_workflow" name="Advisor Request Workflow" isExecutable="true">
+    <bpmn:startEvent id="start_event_request_received" name="Start Request">
+      <bpmn:outgoing>flow_start_to_submit</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="user_task_submit_request" name="Submit Request">
+      <bpmn:incoming>flow_start_to_submit</bpmn:incoming>
+      <bpmn:outgoing>flow_submit_to_validate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="service_task_validate_request" name="Validate Request">
+      <bpmn:incoming>flow_submit_to_validate</bpmn:incoming>
+      <bpmn:incoming>flow_more_info_to_validate</bpmn:incoming>
+      <bpmn:outgoing>flow_validate_to_complete_check</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="gateway_is_request_complete" name="Is Request Complete?">
+      <bpmn:incoming>flow_validate_to_complete_check</bpmn:incoming>
+      <bpmn:outgoing>flow_complete_check_no</bpmn:outgoing>
+      <bpmn:outgoing>flow_complete_check_yes</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="user_task_request_more_info" name="Request More Info">
+      <bpmn:incoming>flow_complete_check_no</bpmn:incoming>
+      <bpmn:outgoing>flow_more_info_to_validate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="user_task_manager_approval" name="Manager Approval">
+      <bpmn:incoming>flow_complete_check_yes</bpmn:incoming>
+      <bpmn:outgoing>flow_approval_to_decision</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="gateway_is_approved" name="Approved?">
+      <bpmn:incoming>flow_approval_to_decision</bpmn:incoming>
+      <bpmn:outgoing>flow_approved_yes</bpmn:outgoing>
+      <bpmn:outgoing>flow_approved_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="service_task_complete_request" name="Complete Request">
+      <bpmn:incoming>flow_approved_yes</bpmn:incoming>
+      <bpmn:outgoing>flow_complete_to_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="end_event_completed" name="Completed">
+      <bpmn:incoming>flow_complete_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="end_event_rejected" name="Rejected">
+      <bpmn:incoming>flow_approved_no</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="flow_start_to_submit" sourceRef="start_event_request_received" targetRef="user_task_submit_request" />
+    <bpmn:sequenceFlow id="flow_submit_to_validate" sourceRef="user_task_submit_request" targetRef="service_task_validate_request" />
+    <bpmn:sequenceFlow id="flow_validate_to_complete_check" sourceRef="service_task_validate_request" targetRef="gateway_is_request_complete" />
+    <bpmn:sequenceFlow id="flow_complete_check_no" name="No" sourceRef="gateway_is_request_complete" targetRef="user_task_request_more_info">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><![CDATA[${!requestComplete}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_complete_check_yes" name="Yes" sourceRef="gateway_is_request_complete" targetRef="user_task_manager_approval">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><![CDATA[${requestComplete}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_more_info_to_validate" sourceRef="user_task_request_more_info" targetRef="service_task_validate_request" />
+    <bpmn:sequenceFlow id="flow_approval_to_decision" sourceRef="user_task_manager_approval" targetRef="gateway_is_approved" />
+    <bpmn:sequenceFlow id="flow_approved_yes" name="Yes" sourceRef="gateway_is_approved" targetRef="service_task_complete_request">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><![CDATA[${approved}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_approved_no" name="No" sourceRef="gateway_is_approved" targetRef="end_event_rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><![CDATA[${!approved}]]></bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_complete_to_end" sourceRef="service_task_complete_request" targetRef="end_event_completed" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_advisor_request_workflow">
+    <bpmndi:BPMNPlane id="BPMNPlane_advisor_request_workflow" bpmnElement="advisor_request_workflow">
+      <bpmndi:BPMNShape id="Shape_start_event_request_received" bpmnElement="start_event_request_received">
+        <dc:Bounds x="120" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_user_task_submit_request" bpmnElement="user_task_submit_request">
+        <dc:Bounds x="220" y="160" width="120" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_service_task_validate_request" bpmnElement="service_task_validate_request">
+        <dc:Bounds x="400" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_gateway_is_request_complete" bpmnElement="gateway_is_request_complete" isMarkerVisible="true">
+        <dc:Bounds x="610" y="175" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_user_task_request_more_info" bpmnElement="user_task_request_more_info">
+        <dc:Bounds x="700" y="300" width="140" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_user_task_manager_approval" bpmnElement="user_task_manager_approval">
+        <dc:Bounds x="720" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_gateway_is_approved" bpmnElement="gateway_is_approved" isMarkerVisible="true">
+        <dc:Bounds x="930" y="175" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_service_task_complete_request" bpmnElement="service_task_complete_request">
+        <dc:Bounds x="1050" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_end_event_completed" bpmnElement="end_event_completed">
+        <dc:Bounds x="1260" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_end_event_rejected" bpmnElement="end_event_rejected">
+        <dc:Bounds x="1062" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Edge_flow_start_to_submit" bpmnElement="flow_start_to_submit">
+        <di:waypoint x="156" y="200" />
+        <di:waypoint x="220" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_submit_to_validate" bpmnElement="flow_submit_to_validate">
+        <di:waypoint x="340" y="200" />
+        <di:waypoint x="400" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_validate_to_complete_check" bpmnElement="flow_validate_to_complete_check">
+        <di:waypoint x="540" y="200" />
+        <di:waypoint x="610" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_complete_check_no" bpmnElement="flow_complete_check_no">
+        <di:waypoint x="635" y="225" />
+        <di:waypoint x="635" y="340" />
+        <di:waypoint x="700" y="340" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="645" y="272" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_complete_check_yes" bpmnElement="flow_complete_check_yes">
+        <di:waypoint x="660" y="200" />
+        <di:waypoint x="720" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="677" y="182" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_more_info_to_validate" bpmnElement="flow_more_info_to_validate">
+        <di:waypoint x="700" y="340" />
+        <di:waypoint x="635" y="340" />
+        <di:waypoint x="470" y="340" />
+        <di:waypoint x="470" y="240" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_approval_to_decision" bpmnElement="flow_approval_to_decision">
+        <di:waypoint x="860" y="200" />
+        <di:waypoint x="930" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_approved_yes" bpmnElement="flow_approved_yes">
+        <di:waypoint x="980" y="200" />
+        <di:waypoint x="1050" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="998" y="182" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_approved_no" bpmnElement="flow_approved_no">
+        <di:waypoint x="955" y="225" />
+        <di:waypoint x="955" y="350" />
+        <di:waypoint x="1062" y="350" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="965" y="278" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_flow_complete_to_end" bpmnElement="flow_complete_to_end">
+        <di:waypoint x="1190" y="200" />
+        <di:waypoint x="1260" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
