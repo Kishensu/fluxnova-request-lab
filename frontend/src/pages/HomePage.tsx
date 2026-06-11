@@ -5,10 +5,30 @@ import {
   GitBranch,
   SearchCheck,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { overviewMetrics, recentRequests } from "../data/mockData";
+import type { WorkflowRequest } from "../types/workflow";
+import { getStoredRequests } from "../utils/workflowStorage";
 
 export function HomePage() {
+  const [savedRequests, setSavedRequests] = useState<WorkflowRequest[]>([]);
+
+  useEffect(() => {
+    setSavedRequests(getStoredRequests().slice(0, 3));
+  }, []);
+
+  const requestsToShow =
+    savedRequests.length > 0
+      ? savedRequests.map((request) => ({
+          id: request.id,
+          requester: request.variables.requesterName,
+          type: request.variables.requestType,
+          status: request.currentStatus,
+          updated: new Date(request.updatedAt).toLocaleString(),
+        }))
+      : recentRequests;
+
   return (
     <div className="space-y-6">
       <section className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
@@ -113,12 +133,20 @@ export function HomePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10 bg-slate-950/40 text-sm text-slate-200">
-              {recentRequests.map((request) => (
+              {requestsToShow.map((request) => (
                 <tr key={request.id}>
                   <td className="px-4 py-4 font-medium text-white">{request.id}</td>
                   <td className="px-4 py-4">{request.requester}</td>
                   <td className="px-4 py-4">{request.type}</td>
-                  <td className="px-4 py-4">{request.status}</td>
+                  <td className="px-4 py-4">
+                    {savedRequests.length > 0 ? (
+                      <Link to={`/requests/${request.id}`} className="text-emerald-300 hover:text-emerald-200">
+                        {request.status}
+                      </Link>
+                    ) : (
+                      request.status
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-slate-400">{request.updated}</td>
                 </tr>
               ))}

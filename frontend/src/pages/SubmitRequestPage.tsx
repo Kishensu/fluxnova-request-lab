@@ -1,7 +1,40 @@
 import { FileText, SendHorizontal, ShieldCheck } from "lucide-react";
-import { requestTemplates } from "../data/mockData";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  requestPriorityOptions,
+  requestTemplates,
+} from "../data/mockData";
+import type { WorkflowFormValues } from "../types/workflow";
+import { createWorkflowRequest, saveWorkflowRequest } from "../utils/workflowStorage";
 
 export function SubmitRequestPage() {
+  const navigate = useNavigate();
+  const [formValues, setFormValues] = useState<WorkflowFormValues>({
+    requesterName: "Nina Brooks",
+    requestType: "Budget Approval",
+    priority: "High",
+    description: "Need budget approval for a customer workshop in Toronto next month.",
+    amount: "3200",
+  });
+
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = event.target;
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const newRequest = createWorkflowRequest(formValues);
+    saveWorkflowRequest(newRequest);
+    navigate(`/requests/${newRequest.id}`);
+  };
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
@@ -17,50 +50,66 @@ export function SubmitRequestPage() {
           </div>
         </div>
 
-        <form className="mt-6 grid gap-4 md:grid-cols-2">
+        <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <label className="space-y-2">
             <span className="text-sm text-slate-300">Requester Name</span>
             <input
-              defaultValue="Nina Brooks"
+              name="requesterName"
+              value={formValues.requesterName}
+              onChange={handleChange}
               className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none ring-0"
             />
           </label>
           <label className="space-y-2">
             <span className="text-sm text-slate-300">Request Type</span>
-            <select className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none">
+            <select
+              name="requestType"
+              value={formValues.requestType}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
+            >
               {requestTemplates.map((template) => (
                 <option key={template.type}>{template.type}</option>
               ))}
             </select>
           </label>
+          <label className="space-y-2">
+            <span className="text-sm text-slate-300">Priority</span>
+            <select
+              name="priority"
+              value={formValues.priority}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
+            >
+              {requestPriorityOptions.map((priority) => (
+                <option key={priority}>{priority}</option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm text-slate-300">Amount or Value</span>
+            <input
+              name="amount"
+              type="number"
+              min="0"
+              value={formValues.amount}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
+            />
+          </label>
           <label className="space-y-2 md:col-span-2">
-            <span className="text-sm text-slate-300">Business Justification</span>
+            <span className="text-sm text-slate-300">Description</span>
             <textarea
+              name="description"
               rows={5}
-              defaultValue="Need budget approval for a customer workshop in Toronto next month."
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm text-slate-300">Department</span>
-            <input
-              defaultValue="Marketing"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm text-slate-300">Estimated Cost</span>
-            <input
-              defaultValue="$3,200"
+              value={formValues.description}
+              onChange={handleChange}
               className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none"
             />
           </label>
 
           <div className="md:col-span-2 flex flex-wrap gap-3 pt-2">
-            <button
-              type="button"
-              className="rounded-2xl bg-white px-5 py-3 font-medium text-slate-950"
-            >
+            <button type="submit" className="rounded-2xl bg-white px-5 py-3 font-medium text-slate-950">
               Submit Mock Request
             </button>
             <button
@@ -82,7 +131,7 @@ export function SubmitRequestPage() {
           <ul className="mt-4 space-y-3 text-sm text-slate-400">
             <li>The form fields become example process variables.</li>
             <li>Submission represents the start event for a new workflow.</li>
-            <li>Request type can drive different approval paths later.</li>
+            <li>Priority and amount can influence later routing decisions.</li>
           </ul>
         </div>
 

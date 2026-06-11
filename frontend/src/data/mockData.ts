@@ -127,3 +127,46 @@ export const recentRequests = [
     updated: "1 hour ago",
   },
 ];
+
+export const requestPriorityOptions = ["Low", "Medium", "High", "Urgent"] as const;
+
+export const workflowStatuses = [
+  "Submitted",
+  "Validation",
+  "Manager Approval",
+  "Exception",
+  "Completed",
+] as const;
+
+export const workflowStepOrder = [
+  {
+    key: "Submitted",
+    label: "Submit Request",
+    type: "Start Event",
+    description: "A requester sends the form and starts a new process instance.",
+  },
+  {
+    key: "Validation",
+    label: "Validation",
+    type: "Service Task",
+    description: "The workflow checks required data and business rules.",
+  },
+  {
+    key: "Manager Approval",
+    label: "Manager Approval",
+    type: "User Task",
+    description: "A manager reviews business context, risk, and value.",
+  },
+  {
+    key: "Exception",
+    label: "Exception Handling",
+    type: "Boundary Event",
+    description: "The workflow pauses for rejection, clarification, or remediation.",
+  },
+  {
+    key: "Completed",
+    label: "Completed",
+    type: "End Event",
+    description: "The request reaches its final business outcome.",
+  },
+] as const;

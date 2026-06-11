@@ -4,6 +4,7 @@ import {
   Gauge,
   GitBranch,
   Home,
+  Layers3,
   Menu,
   Send,
   X,
@@ -42,10 +43,21 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
+function getPageMeta(pathname: string) {
+  if (pathname.startsWith("/requests/")) {
+    return {
+      title: "Request Detail",
+      subtitle: "Inspect status, variables, and BPMN progression for one request.",
+    };
+  }
+
+  return pageMeta[pathname] ?? pageMeta["/"];
+}
+
 export function AppLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const activePage = pageMeta[location.pathname] ?? pageMeta["/"];
+  const activePage = getPageMeta(location.pathname);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -144,7 +156,7 @@ export function AppLayout() {
                 >
                   <Menu size={18} />
                 </button>
-                <div>
+              <div>
                   <p className="text-sm text-slate-400">{activePage.subtitle}</p>
                   <h2 className="text-2xl font-semibold text-white">
                     {activePage.title}
@@ -152,8 +164,9 @@ export function AppLayout() {
                 </div>
               </div>
 
-              <div className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 md:block">
-                Demo mode: mock workflow data only
+              <div className="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 md:flex">
+                <Layers3 size={16} className="text-emerald-300" />
+                <span>Demo mode: mock workflow data only</span>
               </div>
             </div>
           </header>
